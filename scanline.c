@@ -34,7 +34,7 @@ struct Point getRawCoordinates(int *x, int *y) {
     int halfWidth = WIDTH / 2;
     int halfHeight = HEIGHT / 2;
     rawPoint.x = halfWidth + *x;
-    rawPoint.y = halfWidth + *y;
+    rawPoint.y = halfHeight - *y;
     return rawPoint;
 }
 
@@ -66,8 +66,8 @@ void drawLineUpwardAngle(struct FrameBuffer *buffer, struct Point *pointA, struc
 
 void drawLineDownwardAngle(struct FrameBuffer *buffer, struct Point *pointA, struct Point *pointB){
     struct Point rawPoint;
-    int x_gap = (pointB->x - pointA->x) - 2;
-    int y_gap = (pointA->y - pointB->y) - 2;
+    int x_gap = (pointB->x - pointA->x) - 1;
+    int y_gap = (pointA->y - pointB->y) - 1;
     int pixels_per_line = y_gap / x_gap;
     int x_counter = pixels_per_line;
     int curr_x = pointA->x;
@@ -80,8 +80,10 @@ void drawLineDownwardAngle(struct FrameBuffer *buffer, struct Point *pointA, str
 
     for(int y = 0; y < y_gap; y++){
         curr_y--;
-        while(x_counter > 0 && curr_x < pointB->x){
-            curr_x++;
+        while(x_counter > 0){
+            if(curr_x < pointB->x){
+                curr_x++;
+            }
             rawPoint = getRawCoordinates(&curr_x, &curr_y);
             buffer->buffer[rawPoint.y][rawPoint.x] = true;
             x_counter--;
@@ -266,14 +268,24 @@ int main(){
     struct FrameBuffer buffer;
     struct Point pointA, pointB;
 
-    pointA.x = 0;
-    pointA.y = 0;
-
-    pointB.x = 6;
-    pointB.y = -6;
-    
     clearBuffer(&buffer);
+
+    //pointA.x = 0;
+    //pointA.y = 0;
+
+    //pointB.x = 6;
+    //pointB.y = -6;
+    
+    //drawLine(&buffer, &pointA, &pointB);
+
+    pointA.x = 2;
+    pointA.y = 2;
+
+    pointB.x = 8;
+    pointB.y = -8;
+    
     drawLine(&buffer, &pointA, &pointB);
+
     drawBuffer(&buffer);
     return 0;
 }
