@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 // Raster CLI
 // Author: Jethro Kyle Sempio
 
-const int HEIGHT = 30;
-const int WIDTH = 30;
+const int HEIGHT = 22;
+const int WIDTH = 40;
 
 struct FrameBuffer{
     bool buffer[HEIGHT][WIDTH];
@@ -68,8 +70,30 @@ void drawLineDownwardAngle(struct FrameBuffer *buffer, struct Point *pointA, str
     struct Point rawPoint;
     int x_gap = (pointB->x - pointA->x) - 1;
     int y_gap = (pointA->y - pointB->y) - 1;
-    int pixels_per_line = y_gap / x_gap;
-    int x_counter = pixels_per_line;
+    
+    int pixels_per_line = 0;
+    bool is_x_mode = true;
+    if(x_gap > y_gap){
+        pixels_per_line = x_gap / y_gap;
+    }
+    else {
+        pixels_per_line = y_gap / x_gap;
+        is_x_mode = false;
+    }
+     
+    
+    int y_median = 0;
+    int remainder = y_gap % x_gap;
+    
+    if(remainder > 0){
+        y_median = y_gap / 2 - remainder;
+    }
+    else {
+        y_median = -1;
+    }
+
+    int counter = pixels_per_line;
+     
     int curr_x = pointA->x;
     int curr_y = pointA->y;
 
@@ -78,17 +102,51 @@ void drawLineDownwardAngle(struct FrameBuffer *buffer, struct Point *pointA, str
     rawPoint = getRawCoordinates(&pointB->x, &pointB->y);
     buffer->buffer[rawPoint.y][rawPoint.x] = true;
 
-    for(int y = 0; y < y_gap; y++){
-        curr_y--;
-        while(x_counter > 0){
-            if(curr_x < pointB->x){
-                curr_x++;
+    bool isMedianMode = false;
+
+    if(is_x_mode){
+        for(int y = 0; y < y_gap; y++){
+            curr_y--;
+
+            if(y == y_median){
+                isMedianMode = true;
             }
-            rawPoint = getRawCoordinates(&curr_x, &curr_y);
-            buffer->buffer[rawPoint.y][rawPoint.x] = true;
-            x_counter--;
+            else if(isMedianMode && remainder == 0){
+                isMedianMode = false;
+            }
+
+            if(!isMedianMode){
+                while(counter > 0){
+                    if(curr_x < pointB->x){
+                        curr_x++;
+                    }
+                    rawPoint = getRawCoordinates(&curr_x, &curr_y);
+                    buffer->buffer[rawPoint.y][rawPoint.x] = true;
+                    counter--;
+                }
+                counter = pixels_per_line;
+            }
+            else {
+                rawPoint = getRawCoordinates(&curr_x, &curr_y);
+                buffer->buffer[rawPoint.y][rawPoint.x] = true;
+                remainder--;
+            }
+            
         }
-        x_counter = pixels_per_line;
+    }
+    else {
+        for(int x = 0; x < x_gap; x++){
+            curr_x++;
+            while(counter > 0){
+                if(curr_y > pointB->y){
+                    curr_y--;
+                }
+                rawPoint = getRawCoordinates(&curr_x, &curr_y);
+                buffer->buffer[rawPoint.y][rawPoint.x] = true;
+                counter--;
+            }
+            counter = pixels_per_line;
+        }
     }
 }
 
@@ -190,56 +248,10 @@ void drawLine(struct FrameBuffer *buffer, struct Point *pointA, struct Point *po
     }
 }
 
-void drawTriangle(struct FrameBuffer *buffer ,struct Triangle tri){
-    
-    int x_gap = (tri.point2.x - tri.point1.x) - 2;
-    int y_gap = (tri.point2.y - tri.point1.y) - 2;
-    int pixel_per_line = 0;
-    
-    int last_x = 0;
-    int counter_x = 0;
-
-    if(x_gap < 0){
-        x_gap = x_gap * -1;
-    }
-
-    if(y_gap < 0){
-        y_gap = y_gap * -1;
-    }
-
-    pixel_per_line = x_gap / y_gap;
-    printf("%d, %d, %d", x_gap, y_gap, pixel_per_line);
-
-    for(int y=0; y < HEIGHT; y++){
-        
-        counter_x = pixel_per_line;
-        
-        for(int x=0; x < WIDTH; x++){
-            if(isOnPoint(&tri.point1, x, y) || isOnPoint(&tri.point2, x, y) || isOnPoint(&tri.point3, x, y)){
-                buffer->buffer[y][x] = true;
-            }
-            else {
-                struct Point *point2 = &tri.point2;
-                if(counter_x > 0){
-                    if(y < point2->y){
-                        if(last_x < point2->x){
-                            buffer->buffer[y][last_x] = true;
-                            counter_x--;
-                            last_x++;
-                        }
-                        else {
-                            counter_x = 0;
-                        }
-                        
-                    }
-                    else {
-                        buffer->buffer[y][last_x] = false;
-                    }
-                    buffer->buffer[y][last_x] = false;
-                }
-            }
-        }
-    }
+void drawTriangle(struct FrameBuffer *buffer ,struct Triangle *tri){
+    drawLine(buffer, &tri->point1, &tri->point2);
+    drawLine(buffer, &tri->point3, &tri->point2);
+    drawLine(buffer, &tri->point3, &tri->point1);
 }
 
 void clearBuffer(struct FrameBuffer *buffer){
@@ -266,9 +278,47 @@ void drawBuffer(struct FrameBuffer *buffer){
 
 int main(){
     struct FrameBuffer buffer;
-    struct Point pointA, pointB;
+    struct Point pointA, pointB, pointC, pointD;
+    struct Triangle tr1;
+    int varY = -9;
+    int varX = 10;
+    bool polarity = true;
+    while(true){
+        clearBuffer(&buffer);
 
-    clearBuffer(&buffer);
+        tr1.point1.x = 2;
+        tr1.point1.y = 2;
+
+        tr1.point3.x = -15;
+        tr1.point3.y = 5;
+
+        tr1.point2.x = varX;
+        tr1.point2.y = varY;
+
+        if(varY == 0){
+            polarity = false;
+        }
+        else if(varY == -9){
+            polarity = true;
+        }
+
+        if(polarity){
+            varY++;
+            varX++;
+        }
+        else {
+            varY--;
+            varX--;
+        }
+
+        drawTriangle(&buffer, &tr1);
+        drawBuffer(&buffer);
+        printf("\n");
+        printf("Raster CLI---------------------------");
+        usleep(70 * 1000);
+        system("clear");
+    }
+    
 
     //pointA.x = 0;
     //pointA.y = 0;
@@ -278,14 +328,8 @@ int main(){
     
     //drawLine(&buffer, &pointA, &pointB);
 
-    pointA.x = 2;
-    pointA.y = 2;
 
-    pointB.x = 8;
-    pointB.y = -8;
+
     
-    drawLine(&buffer, &pointA, &pointB);
-
-    drawBuffer(&buffer);
     return 0;
 }
