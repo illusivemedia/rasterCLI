@@ -133,7 +133,7 @@ void drawLineUpwardAngle(struct FrameBuffer *buffer, struct Point *pointA, struc
         for(int x = 0; x < x_gap; x++){
             curr_x++;
             while(counter > 0){
-                if(curr_y > pointB->y){
+                if(curr_y < pointB->y){
                     curr_y++;
                 }
                 rawPoint = getRawCoordinates(&curr_x, &curr_y);
@@ -376,33 +376,24 @@ void drawBuffer(struct FrameBuffer *buffer){
     }
 }
 
+// Demo
 int main(){
-    struct FrameBuffer buffer;
-    struct Point pointA, pointB, pointC, pointD;
-    
-    /*
-    pointA.x = -10;
-    pointA.y = 0;
-
-    pointB.x = 10;
-    pointB.y = 0;
-    
-    clearBuffer(&buffer);
-    drawLine(&buffer, &pointA, &pointB);
-    drawBuffer(&buffer);
-    */
-    
+    struct FrameBuffer buffer;    
     struct Triangle tr1;
+
     int varY = 9;
     int varX = 10;
+    int varX2 = -15;
+    int varX3 = 0;
+
     bool polarity = true;
     while(true){
         clearBuffer(&buffer);
 
         tr1.point1.x = 2;
-        tr1.point1.y = 2;
+        tr1.point1.y = varX3;
 
-        tr1.point3.x = -15;
+        tr1.point3.x = varX2;
         tr1.point3.y = 5;
 
         tr1.point2.x = varX;
@@ -418,12 +409,16 @@ int main(){
         if(polarity){
             varY--;
             varX--;
+            varX2++;
+            varX3--;
         }
         else {
             varY++;
             varX++;
+            varX2--;
+            varX3++;
         }
-        //drawLine(&buffer, &pointA, &pointB);
+
         drawTriangle(&buffer, &tr1);
         drawBuffer(&buffer);
         printf("\n");
