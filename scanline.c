@@ -318,18 +318,6 @@ int main(){
         usleep(70 * 1000);
         system("clear");
     }
-    
-
-    //pointA.x = 0;
-    //pointA.y = 0;
-
-    //pointB.x = 6;
-    //pointB.y = -6;
-    
-    //drawLine(&buffer, &pointA, &pointB);
-
-
-
-    
+        
     return 0;
 }
