@@ -422,7 +422,10 @@ int main(){
         drawTriangle(&buffer, &tr1);
         drawBuffer(&buffer);
         printf("\n");
-        printf("Raster CLI---------------------------");
+        printf("Raster CLI--------------------------- \n");
+        printf("Point 1: (%d, %d) \n", tr1.point1.x, tr1.point1.y);
+        printf("Point 2: (%d, %d) \n", tr1.point2.x, tr1.point2.y);
+        printf("Point 3: (%d, %d) \n", tr1.point3.x, tr1.point3.y);
         usleep(70 * 1000);
         system("clear");
     }
